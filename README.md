@@ -75,6 +75,29 @@ For a real phone on your local network, set `EXPO_PUBLIC_PRICE_PROXY_URL` to you
 npm start
 ```
 
+## TestFlight
+
+1. Install and log into EAS CLI
+
+```bash
+npm install -g eas-cli
+eas login
+```
+
+2. Configure Apple credentials when prompted and build for iOS
+
+```bash
+eas build --platform ios --profile production
+```
+
+3. Submit the finished build to TestFlight
+
+```bash
+eas submit --platform ios --profile production
+```
+
+For future JS-only changes, you may be able to use EAS Update instead of a full rebuild. Native or config changes still require a new iOS build.
+
 ## Notes
 
 - The mobile app never needs the OpenAI API key directly.
