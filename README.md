@@ -1,50 +1,82 @@
-# Welcome to your Expo app 👋
+# Shop Ability
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Accessible grocery planning with budget tracking, price scanning, and a lightweight backend proxy for secure image-based price extraction.
 
-## Get started
+## Recommended hosting
 
-1. Install dependencies
+This repo now includes a Render Blueprint at the repository root:
 
-   ```bash
-   npm install
-   ```
+`render.yaml`
 
-2. Start the app
+It deploys the price proxy as a small Node web service and keeps `OPENAI_API_KEY` on the server.
 
-   ```bash
-   npx expo start
-   ```
+## App setup
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+1. Install app dependencies
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Add frontend env vars
 
-## Learn more
+```bash
+cp .env.example .env
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Set `EXPO_PUBLIC_PRICE_PROXY_URL` to your backend URL.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+For Render, this will look like:
 
-## Join the community
+`https://your-render-service.onrender.com`
 
-Join our community of developers creating universal apps.
+## Backend proxy setup
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+1. Add backend env vars
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+2. Put your OpenAI server-side key in `backend/.env`
+
+`OPENAI_API_KEY=...`
+
+3. Start the proxy
+
+```bash
+npm run proxy
+```
+
+By default it runs on `http://localhost:8787`.
+
+For a real phone on your local network, set `EXPO_PUBLIC_PRICE_PROXY_URL` to your computer's LAN IP, for example:
+
+`http://192.168.1.100:8787`
+
+## Deploy the proxy on Render
+
+1. Push this repository to GitHub.
+2. In Render, create a new Blueprint deployment from the repo.
+3. Render will detect `render.yaml` and create `shop-ability-price-proxy`.
+4. In the Render dashboard, set:
+
+`OPENAI_API_KEY`
+
+5. After deploy, copy the public `.onrender.com` URL into your app `.env` as:
+
+`EXPO_PUBLIC_PRICE_PROXY_URL=https://your-render-service.onrender.com`
+
+6. Restart Expo so the app picks up the new public proxy URL.
+
+## Run the app
+
+```bash
+npm start
+```
+
+## Notes
+
+- The mobile app never needs the OpenAI API key directly.
+- The scanner calls the backend proxy at `/api/extract-price`.
+- You can check the proxy with `GET /health`.

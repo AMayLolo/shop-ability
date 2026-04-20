@@ -1,98 +1,326 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import React from 'react';
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import BigButton from '@/components/BigButton';
+import MoneySummary from '@/components/MoneySummary';
+import { AppTheme, Colors, Fonts } from '@/constants/theme';
+import { useAppContext } from '@/context/AppContext';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { formatCurrency } from '@/utils/tax';
 
-export default function HomeScreen() {
+const modes = ['Essentials', 'Weekly Reset', 'Hosting Night'] as const;
+
+export default function DashboardScreen() {
+  const scheme = useColorScheme() ?? 'light';
+  const colors = Colors[scheme];
+  const {
+    budgetInput,
+    setBudgetInput,
+    budget,
+    shoppingMode,
+    setShoppingMode,
+    subtotal,
+    total,
+    remaining,
+    progress,
+    insights,
+  } = useAppContext();
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View
+          style={[
+            styles.hero,
+            {
+              backgroundColor: colors.hero,
+              borderColor: colors.heroSecondary,
+            },
+            AppTheme.shadow.hero,
+          ]}>
+          <Text style={styles.eyebrow}>Shop Ability</Text>
+          <Text style={styles.heroTitle}>A cleaner, calmer way to shop your budget.</Text>
+          <Text style={styles.heroBody}>
+            Set the number you want to spend, preview the checkout total, and keep the cart focused
+            before you leave home.
+          </Text>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+          <View style={styles.heroStats}>
+            <View style={[styles.heroStat, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
+              <Text style={styles.heroStatLabel}>Target</Text>
+              <Text style={styles.heroStatValue}>{formatCurrency(budget)}</Text>
+            </View>
+            <View style={[styles.heroStat, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
+              <Text style={styles.heroStatLabel}>Projected</Text>
+              <Text style={styles.heroStatValue}>{formatCurrency(total)}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View
+          style={[
+            styles.panel,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+            AppTheme.shadow.soft,
+          ]}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Budget setup</Text>
+            <Text style={[styles.sectionCaption, { color: colors.icon }]}>Refine your trip in seconds</Text>
+          </View>
+
+          <Text style={[styles.inputLabel, { color: colors.icon }]}>Trip budget</Text>
+          <View style={[styles.inputShell, { borderColor: colors.border, backgroundColor: colors.surfaceMuted }]}>
+            <Text style={[styles.dollar, { color: colors.tintStrong }]}>$</Text>
+            <TextInput
+              keyboardType="decimal-pad"
+              value={budgetInput}
+              onChangeText={setBudgetInput}
+              placeholder="120"
+              placeholderTextColor={colors.icon}
+              style={[styles.input, { color: colors.text }]}
+            />
+          </View>
+
+          <View style={styles.modeRow}>
+            {modes.map((mode) => {
+              const active = shoppingMode === mode;
+              return (
+                <Text
+                  key={mode}
+                  onPress={() => setShoppingMode(mode)}
+                  style={[
+                    styles.modeChip,
+                    {
+                      backgroundColor: active ? colors.tintStrong : colors.surfaceMuted,
+                      borderColor: active ? colors.tintStrong : colors.border,
+                      color: active ? '#FFF8F1' : colors.text,
+                    },
+                  ]}>
+                  {mode}
+                </Text>
+              );
+            })}
+          </View>
+
+          <View style={styles.progressBlock}>
+            <View style={styles.progressLabels}>
+              <Text style={[styles.progressTitle, { color: colors.text }]}>Budget usage</Text>
+              <Text style={[styles.progressValue, { color: progress > 0.9 ? colors.danger : colors.tintStrong }]}>
+                {Math.round(progress * 100)}%
+              </Text>
+            </View>
+            <View style={[styles.progressTrack, { backgroundColor: colors.surfaceMuted }]}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${Math.max(progress * 100, 6)}%`,
+                    backgroundColor: progress > 0.9 ? colors.danger : colors.accent,
+                  },
+                ]}
+              />
+            </View>
+            <Text style={[styles.progressHint, { color: colors.icon }]}>
+              Subtotal is {formatCurrency(subtotal)} before tax, leaving {formatCurrency(remaining)} unassigned.
+            </Text>
+          </View>
+
+          <BigButton
+            label="Adjust budget details"
+            caption="Open a focused budget setup view"
+            onPress={() => router.push('/enter-money')}
+          />
+          <BigButton
+            label="Open price scanner"
+            caption="Use the stronger multi-step scan and review flow"
+            variant="secondary"
+            onPress={() => router.push('/scan')}
+          />
+        </View>
+
+        <View style={styles.summaryGrid}>
+          {insights.map((insight, index) => (
+            <View key={insight.id} style={styles.summaryItem}>
+              <MoneySummary
+                label={insight.label}
+                value={insight.value}
+                detail={insight.detail}
+                tone={index === 0 ? 'accent' : 'neutral'}
+              />
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  safeArea: {
+    flex: 1,
+  },
+  content: {
+    alignSelf: 'center',
+    gap: 20,
+    padding: 20,
+    paddingBottom: 40,
+    width: '100%',
+    maxWidth: AppTheme.maxWidth,
+  },
+  hero: {
+    borderRadius: AppTheme.radius.lg,
+    borderWidth: 1,
+    gap: 14,
+    padding: 24,
+  },
+  eyebrow: {
+    color: '#E6D5C3',
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  heroTitle: {
+    color: '#FFF8F1',
+    fontFamily: Fonts.serif,
+    fontSize: 34,
+    lineHeight: 40,
+  },
+  heroBody: {
+    color: '#E5D8CA',
+    fontFamily: Fonts.sans,
+    fontSize: 15,
+    lineHeight: 23,
+    maxWidth: 520,
+  },
+  heroStats: {
     flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  heroStat: {
+    borderRadius: AppTheme.radius.md,
+    flex: 1,
+    gap: 6,
+    padding: 16,
+  },
+  heroStatLabel: {
+    color: '#D8C5B0',
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    textTransform: 'uppercase',
+  },
+  heroStatValue: {
+    color: '#FFF8F1',
+    fontFamily: Fonts.rounded,
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  panel: {
+    borderRadius: AppTheme.radius.lg,
+    borderWidth: 1,
+    gap: 18,
+    padding: 20,
+  },
+  sectionHeader: {
+    gap: 4,
+  },
+  sectionTitle: {
+    fontFamily: Fonts.rounded,
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  sectionCaption: {
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+  },
+  inputLabel: {
+    fontFamily: Fonts.sans,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  inputShell: {
     alignItems: 'center',
-    gap: 8,
+    borderRadius: AppTheme.radius.md,
+    borderWidth: 1,
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  dollar: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginRight: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  input: {
+    flex: 1,
+    fontFamily: Fonts.rounded,
+    fontSize: 28,
+    fontWeight: '700',
+    padding: 0,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  modeChip: {
+    borderRadius: AppTheme.radius.pill,
+    borderWidth: 1,
+    fontFamily: Fonts.sans,
+    fontSize: 13,
+    fontWeight: '700',
+    overflow: 'hidden',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  progressBlock: {
+    gap: 10,
+  },
+  progressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  progressTitle: {
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  progressValue: {
+    fontFamily: Fonts.sans,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  progressTrack: {
+    borderRadius: AppTheme.radius.pill,
+    height: 12,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    borderRadius: AppTheme.radius.pill,
+    height: '100%',
+  },
+  progressHint: {
+    fontFamily: Fonts.sans,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  summaryGrid: {
+    gap: 14,
+  },
+  summaryItem: {
+    width: '100%',
   },
 });

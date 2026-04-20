@@ -1,53 +1,106 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const ink = '#14213D';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: ink,
+    background: '#F4EFE8',
+    surface: '#FFFDFC',
+    surfaceMuted: '#EEE5D7',
+    tint: '#B87444',
+    tintStrong: '#8F4F26',
+    accent: '#2D6A4F',
+    accentSoft: '#D9E7D8',
+    icon: '#7B6A58',
+    border: '#E5D8C7',
+    tabIconDefault: '#9B866E',
+    tabIconSelected: '#8F4F26',
+    hero: '#1F2A44',
+    heroSecondary: '#B87444',
+    danger: '#B04A3B',
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#F6EFE6',
+    background: '#151515',
+    surface: '#1D1B19',
+    surfaceMuted: '#2A2521',
+    tint: '#E2A065',
+    tintStrong: '#F4C086',
+    accent: '#7AC19B',
+    accentSoft: '#24372E',
+    icon: '#C6B7A7',
+    border: '#3A322C',
+    tabIconDefault: '#9E8E7E',
+    tabIconSelected: '#F4C086',
+    hero: '#201C19',
+    heroSecondary: '#6A8D73',
+    danger: '#E58E80',
   },
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
+    sans: 'Avenir Next',
+    serif: 'Georgia',
+    rounded: 'Avenir Next Rounded',
+    mono: 'Menlo',
+  },
+  android: {
+    sans: 'sans-serif',
+    serif: 'serif',
+    rounded: 'sans-serif-medium',
+    mono: 'monospace',
   },
   default: {
-    sans: 'normal',
+    sans: 'sans-serif',
     serif: 'serif',
-    rounded: 'normal',
+    rounded: 'sans-serif',
     mono: 'monospace',
   },
   web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+    sans: "'Avenir Next', 'Segoe UI', sans-serif",
+    serif: "Iowan Old Style, Georgia, serif",
+    rounded: "'Avenir Next', 'Segoe UI', sans-serif",
+    mono: "SFMono-Regular, Menlo, Monaco, Consolas, monospace",
   },
 });
+
+export const AppTheme = {
+  spacing: {
+    xs: 6,
+    sm: 10,
+    md: 16,
+    lg: 24,
+    xl: 32,
+  },
+  radius: {
+    sm: 12,
+    md: 18,
+    lg: 28,
+    pill: 999,
+  },
+  shadow: {
+    soft: {
+      shadowColor: '#2C2118',
+      shadowOpacity: 0.08,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 10 },
+      elevation: 4,
+    },
+    hero: {
+      shadowColor: '#0F172A',
+      shadowOpacity: 0.18,
+      shadowRadius: 24,
+      shadowOffset: { width: 0, height: 16 },
+      elevation: 8,
+    },
+  },
+  maxWidth: 1080,
+  copy: {
+    appName: 'Shop Ability',
+    tagline: 'Plan a smarter store run with confidence before you hit the aisle.',
+  },
+};
+
+export type AppColorTheme = keyof typeof Colors;

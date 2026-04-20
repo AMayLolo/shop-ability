@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: shop-ability-price-proxy
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm run proxy
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_VISION_MODEL
+        value: gpt-4.1-mini
