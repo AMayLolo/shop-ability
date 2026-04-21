@@ -32,11 +32,11 @@ type AppContextType = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const starterItems: CartItem[] = [
-  { id: '1', name: 'Organic berries', category: 'produce', price: 6.5, quantity: 1, priority: 'nice', source: 'seed' },
-  { id: '2', name: 'Chicken cutlets', category: 'protein', price: 12.0, quantity: 1, priority: 'core', source: 'seed' },
-  { id: '3', name: 'Greek yogurt', category: 'protein', price: 5.25, quantity: 2, priority: 'core', source: 'seed' },
-  { id: '4', name: 'Sparkling water', category: 'pantry', price: 7.4, quantity: 1, priority: 'nice', source: 'seed' },
-  { id: '5', name: 'Dish soap', category: 'household', price: 4.8, quantity: 1, priority: 'core', source: 'seed' },
+  { id: '1', name: 'Notebook', category: 'household', price: 4.5, quantity: 1, priority: 'core', source: 'seed' },
+  { id: '2', name: 'Water bottle', category: 'household', price: 12.0, quantity: 1, priority: 'core', source: 'seed' },
+  { id: '3', name: 'Snack pack', category: 'pantry', price: 3.75, quantity: 2, priority: 'nice', source: 'seed' },
+  { id: '4', name: 'Phone cable', category: 'household', price: 9.99, quantity: 1, priority: 'core', source: 'seed' },
+  { id: '5', name: 'T-shirt', category: 'household', price: 14.0, quantity: 1, priority: 'nice', source: 'seed' },
 ];
 
 function toBudget(value: string) {
@@ -88,21 +88,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     () => [
       {
         id: 'remaining',
-        label: 'Remaining',
+        label: 'Left to spend',
         value: formatCurrency(remaining),
-        detail: remaining > 15 ? 'You still have room for one premium add-on.' : 'Keep the rest of the cart tight.',
+        detail: remaining > 15 ? 'You still have room for more items.' : 'You are close to your limit.',
       },
       {
         id: 'scanned-items',
-        label: 'Scanned items',
+        label: 'Items scanned',
         value: `${scannedCount}`,
-        detail: scannedCount > 0 ? 'Quick scans are already feeding the live cart.' : 'Use the scanner to add items with less manual entry.',
+        detail: scannedCount > 0 ? 'Scanned items are already in your cart.' : 'Use the scanner to add items quickly.',
       },
       {
         id: 'tax',
-        label: 'With tax',
+        label: 'Total with tax',
         value: formatCurrency(total),
-        detail: `Includes ${formatCurrency(tax)} in estimated tax at ${(DEFAULT_TAX_RATE * 100).toFixed(2)}%.`,
+        detail: `${formatCurrency(tax)} estimated tax.`,
       },
     ],
     [remaining, scannedCount, tax, total],

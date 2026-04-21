@@ -7,21 +7,6 @@ import { useAppContext } from '@/context/AppContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { formatCurrency } from '@/utils/tax';
 
-const categoryNotes = [
-  {
-    title: 'Protein anchors the basket',
-    body: 'Higher-value staples are still controlled, which keeps the trip useful without feeling stripped down.',
-  },
-  {
-    title: 'Nice-to-haves stay visible',
-    body: 'Premium extras are separated mentally from essentials, making cuts easier when prices move.',
-  },
-  {
-    title: 'Tax is already accounted for',
-    body: 'Seeing the full checkout estimate reduces last-minute surprises at the register.',
-  },
-];
-
 export default function InsightsScreen() {
   const scheme = useColorScheme() ?? 'light';
   const colors = Colors[scheme];
@@ -40,24 +25,18 @@ export default function InsightsScreen() {
             },
             AppTheme.shadow.soft,
           ]}>
-          <Text style={[styles.headerKicker, { color: colors.tintStrong }]}>Trip profile</Text>
+          <Text style={[styles.headerKicker, { color: colors.tintStrong }]}>Cart</Text>
           <Text style={[styles.headerTitle, { color: colors.text }]}>{shoppingMode}</Text>
           <Text style={[styles.headerBody, { color: colors.icon }]}>
-            A polished summary of where the trip stands right now, so you can see what is driving
-            the spend at a glance.
+            See your items and your total.
           </Text>
         </View>
 
         <View style={styles.summaryGrid}>
-          {insights.map((insight, index) => (
-            <MoneySummary
-              key={insight.id}
-              label={insight.label}
-              value={insight.value}
-              detail={insight.detail}
-              tone={index === 2 ? 'accent' : 'neutral'}
-            />
-          ))}
+          <MoneySummary label="Subtotal" value={formatCurrency(subtotal)} detail="Items before tax" />
+          <MoneySummary label="Tax" value={formatCurrency(tax)} detail="Estimated tax" />
+          <MoneySummary label="Total" value={formatCurrency(total)} detail="What you may pay" tone="accent" />
+          <MoneySummary label="Left" value={formatCurrency(remaining)} detail="Budget left" />
         </View>
 
         {scannedItems.length ? (
@@ -70,13 +49,13 @@ export default function InsightsScreen() {
               },
               AppTheme.shadow.soft,
             ]}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recently scanned</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Scanned items</Text>
             {scannedItems.slice(-3).reverse().map((item) => (
               <View key={item.id} style={[styles.lineItem, { borderBottomColor: colors.border }]}>
                 <View style={styles.lineItemCopy}>
                   <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
                   <Text style={[styles.itemMeta, { color: colors.icon }]}>
-                    Added from scanner · {item.category}
+                    From scanner · {item.category}
                   </Text>
                 </View>
                 <Text style={[styles.itemPrice, { color: colors.text }]}>{formatCurrency(item.price)}</Text>
@@ -94,13 +73,13 @@ export default function InsightsScreen() {
             },
             AppTheme.shadow.soft,
           ]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Cart composition</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>All items</Text>
           {cartItems.map((item) => (
             <View key={item.id} style={[styles.lineItem, { borderBottomColor: colors.border }]}>
               <View style={styles.lineItemCopy}>
                 <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
                 <Text style={[styles.itemMeta, { color: colors.icon }]}>
-                  {item.category} · {item.priority === 'core' ? 'Essential' : 'Flexible'}
+                  {item.quantity} x {item.category}
                 </Text>
               </View>
               <Text style={[styles.itemPrice, { color: colors.text }]}>
@@ -119,31 +98,14 @@ export default function InsightsScreen() {
               <Text style={[styles.totalValue, { color: colors.text }]}>{formatCurrency(tax)}</Text>
             </View>
             <View style={styles.totalLine}>
-              <Text style={[styles.totalStrong, { color: colors.text }]}>Projected total</Text>
+              <Text style={[styles.totalStrong, { color: colors.text }]}>Total</Text>
               <Text style={[styles.totalStrong, { color: colors.tintStrong }]}>{formatCurrency(total)}</Text>
             </View>
             <View style={styles.totalLine}>
-              <Text style={[styles.totalLabel, { color: colors.icon }]}>Remaining room</Text>
+              <Text style={[styles.totalLabel, { color: colors.icon }]}>Left to spend</Text>
               <Text style={[styles.totalValue, { color: colors.accent }]}>{formatCurrency(remaining)}</Text>
             </View>
           </View>
-        </View>
-
-        <View style={styles.noteStack}>
-          {categoryNotes.map((note) => (
-            <View
-              key={note.title}
-              style={[
-                styles.noteCard,
-                {
-                  backgroundColor: colors.surfaceMuted,
-                  borderColor: colors.border,
-                },
-              ]}>
-              <Text style={[styles.noteTitle, { color: colors.text }]}>{note.title}</Text>
-              <Text style={[styles.noteBody, { color: colors.icon }]}>{note.body}</Text>
-            </View>
-          ))}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -244,24 +206,5 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.rounded,
     fontSize: 18,
     fontWeight: '700',
-  },
-  noteStack: {
-    gap: 12,
-  },
-  noteCard: {
-    borderRadius: AppTheme.radius.md,
-    borderWidth: 1,
-    gap: 6,
-    padding: 18,
-  },
-  noteTitle: {
-    fontFamily: Fonts.sans,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  noteBody: {
-    fontFamily: Fonts.sans,
-    fontSize: 14,
-    lineHeight: 20,
   },
 });

@@ -16,8 +16,6 @@ import { useAppContext } from '@/context/AppContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { formatCurrency } from '@/utils/tax';
 
-const modes = ['Essentials', 'Weekly Reset', 'Hosting Night'] as const;
-
 export default function DashboardScreen() {
   const scheme = useColorScheme() ?? 'light';
   const colors = Colors[scheme];
@@ -25,9 +23,8 @@ export default function DashboardScreen() {
     budgetInput,
     setBudgetInput,
     budget,
-    shoppingMode,
-    setShoppingMode,
     subtotal,
+    tax,
     total,
     remaining,
     progress,
@@ -47,19 +44,18 @@ export default function DashboardScreen() {
             AppTheme.shadow.hero,
           ]}>
           <Text style={styles.eyebrow}>Shop Ability</Text>
-          <Text style={styles.heroTitle}>A cleaner, calmer way to shop your budget.</Text>
+          <Text style={styles.heroTitle}>Simple help for any shopping trip.</Text>
           <Text style={styles.heroBody}>
-            Set the number you want to spend, preview the checkout total, and keep the cart focused
-            before you leave home.
+            Scan one item at a time. Check the total. Stay on budget.
           </Text>
 
           <View style={styles.heroStats}>
             <View style={[styles.heroStat, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-              <Text style={styles.heroStatLabel}>Target</Text>
+              <Text style={styles.heroStatLabel}>Budget</Text>
               <Text style={styles.heroStatValue}>{formatCurrency(budget)}</Text>
             </View>
             <View style={[styles.heroStat, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-              <Text style={styles.heroStatLabel}>Projected</Text>
+              <Text style={styles.heroStatLabel}>Cart total</Text>
               <Text style={styles.heroStatValue}>{formatCurrency(total)}</Text>
             </View>
           </View>
@@ -75,11 +71,11 @@ export default function DashboardScreen() {
             AppTheme.shadow.soft,
           ]}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Budget setup</Text>
-            <Text style={[styles.sectionCaption, { color: colors.icon }]}>Refine your trip in seconds</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Shopping budget</Text>
+            <Text style={[styles.sectionCaption, { color: colors.icon }]}>Keep the trip simple</Text>
           </View>
 
-          <Text style={[styles.inputLabel, { color: colors.icon }]}>Trip budget</Text>
+          <Text style={[styles.inputLabel, { color: colors.icon }]}>Budget</Text>
           <View style={[styles.inputShell, { borderColor: colors.border, backgroundColor: colors.surfaceMuted }]}>
             <Text style={[styles.dollar, { color: colors.tintStrong }]}>$</Text>
             <TextInput
@@ -92,30 +88,9 @@ export default function DashboardScreen() {
             />
           </View>
 
-          <View style={styles.modeRow}>
-            {modes.map((mode) => {
-              const active = shoppingMode === mode;
-              return (
-                <Text
-                  key={mode}
-                  onPress={() => setShoppingMode(mode)}
-                  style={[
-                    styles.modeChip,
-                    {
-                      backgroundColor: active ? colors.tintStrong : colors.surfaceMuted,
-                      borderColor: active ? colors.tintStrong : colors.border,
-                      color: active ? '#FFF8F1' : colors.text,
-                    },
-                  ]}>
-                  {mode}
-                </Text>
-              );
-            })}
-          </View>
-
           <View style={styles.progressBlock}>
             <View style={styles.progressLabels}>
-              <Text style={[styles.progressTitle, { color: colors.text }]}>Budget usage</Text>
+              <Text style={[styles.progressTitle, { color: colors.text }]}>Used</Text>
               <Text style={[styles.progressValue, { color: progress > 0.9 ? colors.danger : colors.tintStrong }]}>
                 {Math.round(progress * 100)}%
               </Text>
@@ -131,24 +106,32 @@ export default function DashboardScreen() {
                 ]}
               />
             </View>
-            <Text style={[styles.progressHint, { color: colors.icon }]}>
-              Subtotal is {formatCurrency(subtotal)} before tax, leaving {formatCurrency(remaining)} unassigned.
-            </Text>
+          </View>
+
+          <View style={styles.summaryGrid}>
+            <View style={styles.summaryItem}>
+              <MoneySummary label="Subtotal" value={formatCurrency(subtotal)} detail="Items before tax" />
+            </View>
+            <View style={styles.summaryItem}>
+              <MoneySummary label="Tax" value={formatCurrency(tax)} detail="Estimated tax" />
+            </View>
+            <View style={styles.summaryItem}>
+              <MoneySummary label="Left" value={formatCurrency(remaining)} detail="Budget left" tone="accent" />
+            </View>
           </View>
 
           <BigButton
-            label="Adjust budget details"
-            caption="Open a focused budget setup view"
+            label="Change budget"
+            caption="Open budget screen"
             onPress={() => router.push('/enter-money')}
           />
           <BigButton
-            label="Open price scanner"
-            caption="Use the stronger multi-step scan and review flow"
+            label="Scan item"
+            caption="Add one item"
             variant="secondary"
             onPress={() => router.push('/scan')}
           />
         </View>
-
         <View style={styles.summaryGrid}>
           {insights.map((insight, index) => (
             <View key={insight.id} style={styles.summaryItem}>
@@ -271,21 +254,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     padding: 0,
   },
-  modeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  modeChip: {
-    borderRadius: AppTheme.radius.pill,
-    borderWidth: 1,
-    fontFamily: Fonts.sans,
-    fontSize: 13,
-    fontWeight: '700',
-    overflow: 'hidden',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
   progressBlock: {
     gap: 10,
   },
@@ -311,11 +279,6 @@ const styles = StyleSheet.create({
   progressFill: {
     borderRadius: AppTheme.radius.pill,
     height: '100%',
-  },
-  progressHint: {
-    fontFamily: Fonts.sans,
-    fontSize: 13,
-    lineHeight: 19,
   },
   summaryGrid: {
     gap: 14,

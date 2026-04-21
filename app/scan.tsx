@@ -158,12 +158,11 @@ export default function ScanScreen() {
         <View style={[styles.permissionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.permissionTitle, { color: colors.text }]}>Camera access is required</Text>
           <Text style={[styles.permissionBody, { color: colors.icon }]}>
-            This scanner uses a live barcode pass, a captured-image verification pass, and optional
-            vision extraction so users can get pricing with fewer manual steps.
+            Turn on the camera to scan an item and read the price.
           </Text>
           <BigButton
             label="Enable camera"
-            caption="Allow access to scan products and shelf labels"
+            caption="Allow camera access"
             onPress={() => {
               void requestPermission();
             }}
@@ -177,12 +176,10 @@ export default function ScanScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.kicker, { color: colors.tintStrong }]}>Accessible scan flow</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Scan fast, verify once, add straight to cart.</Text>
+          <Text style={[styles.kicker, { color: colors.tintStrong }]}>Scanner</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Scan item. Check price. Add to cart.</Text>
           <Text style={[styles.body, { color: colors.icon }]}>
-            This flow combines barcode evidence and image-based price extraction. The result is kept
-            intentionally simple so someone under time pressure or cognitive load can confirm the
-            price quickly and move on.
+            Keep the label inside the box. Take one clear picture.
           </Text>
           <View
             style={[
@@ -251,7 +248,7 @@ export default function ScanScreen() {
 
         <BigButton
           label={isProcessing ? 'Reading the price...' : 'Capture and read price'}
-          caption="Take one clear photo of the label or package"
+          caption="Take picture"
           onPress={() => {
             void handleCapture();
           }}
@@ -260,7 +257,7 @@ export default function ScanScreen() {
         <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.metaLabel, { color: colors.icon }]}>Live barcode</Text>
           <Text style={[styles.metaValue, { color: colors.text }]}>
-            {liveBarcode ?? 'Point the camera at a barcode or shelf label'}
+            {liveBarcode ?? 'Point at item or price label'}
           </Text>
         </View>
 
@@ -284,7 +281,7 @@ export default function ScanScreen() {
             ) : null}
 
             <View style={styles.reviewSection}>
-              <Text style={[styles.reviewTitle, { color: colors.text }]}>Quick review</Text>
+              <Text style={[styles.reviewTitle, { color: colors.text }]}>Check item</Text>
               <TextInput
                 accessibilityLabel="Item name"
                 value={manualName}
@@ -334,13 +331,13 @@ export default function ScanScreen() {
               <Text style={[styles.reviewHint, { color: colors.icon }]}>
                 {manualPrice
                   ? `Ready to add at ${formatCurrency(Number(manualPrice) || 0)}`
-                  : 'If the price is wrong or blank, correct it here before adding.'}
+                  : 'Fix the price if needed.'}
               </Text>
             </View>
 
             <BigButton
               label="Add item to cart"
-              caption="Save this scan into the live shopping list"
+              caption="Save item"
               onPress={addScannedItemToCart}
             />
 
@@ -350,22 +347,9 @@ export default function ScanScreen() {
               </View>
             ) : null}
 
-            <View style={styles.signalStack}>
-              {candidate.signals.map((signal) => (
-                <View
-                  key={`${signal.source}-${signal.detail}`}
-                  style={[styles.signalRow, { backgroundColor: colors.surfaceMuted }]}>
-                  <Text style={[styles.signalSource, { color: colors.text }]}>{signal.source}</Text>
-                  <Text style={[styles.signalDetail, { color: colors.icon }]}>
-                    {Math.round(signal.confidence * 100)}% · {signal.detail}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
             {candidate.reviewNotes.length ? (
               <View style={styles.noteStack}>
-                {candidate.reviewNotes.map((note) => (
+                {candidate.reviewNotes.slice(0, 2).map((note) => (
                   <Text key={note} style={[styles.noteText, { color: colors.icon }]}>
                     • {note}
                   </Text>
@@ -598,25 +582,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     lineHeight: 20,
-  },
-  signalStack: {
-    gap: 10,
-  },
-  signalRow: {
-    borderRadius: AppTheme.radius.md,
-    gap: 4,
-    padding: 14,
-  },
-  signalSource: {
-    fontFamily: Fonts.sans,
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
-  signalDetail: {
-    fontFamily: Fonts.sans,
-    fontSize: 13,
-    lineHeight: 19,
   },
   noteStack: {
     gap: 6,
