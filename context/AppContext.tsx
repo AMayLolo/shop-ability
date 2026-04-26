@@ -10,7 +10,9 @@ import {
   roundCurrency,
 } from '@/utils/tax';
 
-type AddCartItemInput = Omit<CartItem, 'id'>;
+type AddCartItemInput = Omit<CartItem, 'id' | 'enabled'> & {
+  enabled?: boolean;
+};
 
 type AppContextType = {
   budgetInput: string;
@@ -21,6 +23,7 @@ type AppContextType = {
   taxRate: number;
   cartItems: CartItem[];
   addCartItem: (item: AddCartItemInput) => void;
+  toggleCartItem: (itemId: string) => void;
   subtotal: number;
   tax: number;
   total: number;
@@ -32,11 +35,11 @@ type AppContextType = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const starterItems: CartItem[] = [
-  { id: '1', name: 'Notebook', category: 'household', price: 4.5, quantity: 1, priority: 'core', source: 'seed' },
-  { id: '2', name: 'Water bottle', category: 'household', price: 12.0, quantity: 1, priority: 'core', source: 'seed' },
-  { id: '3', name: 'Snack pack', category: 'pantry', price: 3.75, quantity: 2, priority: 'nice', source: 'seed' },
-  { id: '4', name: 'Phone cable', category: 'household', price: 9.99, quantity: 1, priority: 'core', source: 'seed' },
-  { id: '5', name: 'T-shirt', category: 'household', price: 14.0, quantity: 1, priority: 'nice', source: 'seed' },
+  { id: '1', name: 'Notebook', category: 'household', price: 4.5, quantity: 1, priority: 'core', enabled: true, source: 'seed' },
+  { id: '2', name: 'Water bottle', category: 'household', price: 12.0, quantity: 1, priority: 'core', enabled: true, source: 'seed' },
+  { id: '3', name: 'Snack pack', category: 'pantry', price: 3.75, quantity: 2, priority: 'nice', enabled: true, source: 'seed' },
+  { id: '4', name: 'Phone cable', category: 'household', price: 9.99, quantity: 1, priority: 'core', enabled: true, source: 'seed' },
+  { id: '5', name: 'T-shirt', category: 'household', price: 14.0, quantity: 1, priority: 'nice', enabled: true, source: 'seed' },
 ];
 
 function toBudget(value: string) {
@@ -69,20 +72,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...currentItems,
         {
           ...item,
+          enabled: item.enabled ?? true,
           id: `${Date.now()}-${currentItems.length + 1}`,
         },
       ];
     });
   }, []);
 
+  const toggleCartItem = useCallback((itemId: string) => {
+    setCartItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === itemId
+          ? { ...item, enabled: !item.enabled }
+          : item,
+      ),
+    );
+  }, []);
+
   const budget = toBudget(budgetInput);
   const subtotal = calculateSubtotal(cartItems);
   const tax = calculateTax(subtotal, DEFAULT_TAX_RATE);
   const { total } = calculateTotal(cartItems, DEFAULT_TAX_RATE);
-  const remaining = roundCurrency(Math.max(budget - total, 0));
+  const remaining = roundCurrency(budget - total);
   const progress = budget > 0 ? Math.min(total / budget, 1) : 0;
 
   const scannedCount = cartItems.filter((item) => item.source === 'scanner').length;
+  const disabledCount = cartItems.filter((item) => !item.enabled).length;
 
   const insights = useMemo<InsightCard[]>(
     () => [
@@ -90,7 +105,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         id: 'remaining',
         label: 'Left to spend',
         value: formatCurrency(remaining),
-        detail: remaining > 15 ? 'You still have room for more items.' : 'You are close to your limit.',
+        detail:
+          remaining < 0
+            ? 'You are over budget right now.'
+            : remaining > 15
+              ? 'You still have room for more items.'
+              : 'You are close to your limit.',
       },
       {
         id: 'scanned-items',
@@ -104,8 +124,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         value: formatCurrency(total),
         detail: `${formatCurrency(tax)} estimated tax.`,
       },
+      {
+        id: 'parked-items',
+        label: 'Items off',
+        value: `${disabledCount}`,
+        detail: disabledCount > 0 ? 'These items are excluded from the total.' : 'All items are counting toward the total.',
+      },
     ],
-    [remaining, scannedCount, tax, total],
+    [disabledCount, remaining, scannedCount, tax, total],
   );
 
   const value = useMemo(
@@ -118,6 +144,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       taxRate: DEFAULT_TAX_RATE,
       cartItems,
       addCartItem,
+      toggleCartItem,
       subtotal,
       tax,
       total,
@@ -125,7 +152,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       progress,
       insights,
     }),
-    [addCartItem, budget, budgetInput, cartItems, insights, progress, remaining, shoppingMode, subtotal, tax, total],
+    [addCartItem, budget, budgetInput, cartItems, insights, progress, remaining, shoppingMode, subtotal, tax, toggleCartItem, total],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

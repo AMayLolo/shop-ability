@@ -1,21 +1,22 @@
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   ActivityIndicator,
   Platform,
   Pressable,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
 
+import AppScreen from '@/components/AppScreen';
 import BigButton from '@/components/BigButton';
+import SectionCard from '@/components/SectionCard';
 import { AppTheme, Colors, Fonts } from '@/constants/theme';
 import { useAppContext } from '@/context/AppContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -23,6 +24,7 @@ import {
   SUPPORTED_BARCODE_TYPES,
   buildPriceCandidate,
   extractVisionPrice,
+  isVisionExtractionConfigured,
   preprocessScanImage,
   scanBarcodesFromImage,
 } from '@/services/price-scanner';
@@ -49,6 +51,44 @@ export default function ScanScreen() {
   const [manualPrice, setManualPrice] = useState('');
   const [manualCategory, setManualCategory] = useState<CartCategory>('pantry');
   const [saveMessage, setSaveMessage] = useState('');
+  const autoCaptureTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSubmittedBarcodeRef = useRef<string | null>(null);
+  const hasVisionExtraction = isVisionExtractionConfigured();
+
+  useEffect(() => {
+    return () => {
+      if (autoCaptureTimeoutRef.current) {
+        clearTimeout(autoCaptureTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const completeScan = ({
+    itemName,
+    price,
+    category,
+    barcode,
+  }: {
+    itemName: string;
+    price: number;
+    category: CartCategory;
+    barcode?: string;
+  }) => {
+    addCartItem({
+      name: itemName,
+      price,
+      quantity: 1,
+      category,
+      priority: defaultPriority,
+      barcode,
+      source: 'scanner',
+    });
+
+    const successMessage = `${itemName} added to cart at ${formatCurrency(price)}.`;
+    setSaveMessage(successMessage);
+    announce(successMessage);
+    router.replace('/explore');
+  };
 
   const handleBarcodeScanned = (result: BarcodeScanningResult) => {
     if (isProcessing) {
@@ -56,9 +96,18 @@ export default function ScanScreen() {
     }
 
     setLiveBarcode(result.data);
+
+    if (lastSubmittedBarcodeRef.current === result.data || autoCaptureTimeoutRef.current) {
+      return;
+    }
+
+    autoCaptureTimeoutRef.current = setTimeout(() => {
+      autoCaptureTimeoutRef.current = null;
+      void handleCapture(result.data);
+    }, 450);
   };
 
-  const handleCapture = async () => {
+  const handleCapture = async (barcodeOverride?: string) => {
     if (!cameraRef.current || isProcessing) {
       return;
     }
@@ -82,9 +131,10 @@ export default function ScanScreen() {
       const processedImage = await preprocessScanImage(photo.uri);
       const imageBarcodes = await scanBarcodesFromImage(processedImage.uri);
       const visionExtraction = await extractVisionPrice(processedImage.base64 ?? photo.base64 ?? null);
+      const activeBarcode = barcodeOverride ?? liveBarcode;
 
       const resolvedCandidate = buildPriceCandidate({
-        liveBarcode,
+        liveBarcode: activeBarcode,
         captureBarcode: imageBarcodes[0]?.data,
         imageUri: processedImage.uri,
         visionExtraction,
@@ -104,6 +154,17 @@ export default function ScanScreen() {
         setManualPrice(resolvedPrice);
         setManualCategory(resolvedCandidate.category ?? 'pantry');
 
+        if (resolvedName && resolvedPrice) {
+          lastSubmittedBarcodeRef.current = activeBarcode ?? resolvedCandidate.normalizedBarcode;
+          completeScan({
+            itemName: resolvedName,
+            price: Number(resolvedPrice),
+            category: resolvedCandidate.category ?? 'pantry',
+            barcode: resolvedCandidate.normalizedBarcode,
+          });
+          return;
+        }
+
         announce(
           resolvedPrice
             ? `${resolvedName || 'Item'} detected at ${formatCurrency(Number(resolvedPrice))}. Review and add to cart.`
@@ -112,6 +173,11 @@ export default function ScanScreen() {
       } else {
         announce('No item could be extracted. Please line up the price label and try again.');
       }
+    } catch {
+      setCandidate(null);
+      const message = 'The camera could not finish scanning this item. Try again with the label centered.';
+      setSaveMessage(message);
+      announce(message);
     } finally {
       setIsProcessing(false);
     }
@@ -138,9 +204,11 @@ export default function ScanScreen() {
       source: 'scanner',
     });
 
+    lastSubmittedBarcodeRef.current = candidate?.normalizedBarcode ?? null;
     const successMessage = `${trimmedName} added to cart at ${formatCurrency(parsedPrice)}.`;
     setSaveMessage(successMessage);
     announce(successMessage);
+    router.replace('/explore');
   };
 
   if (!permission) {
@@ -154,11 +222,10 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: colors.background }]}>
-        <View style={[styles.permissionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.permissionTitle, { color: colors.text }]}>Camera access is required</Text>
-          <Text style={[styles.permissionBody, { color: colors.icon }]}>
-            Turn on the camera to read the price.
-          </Text>
+        <SectionCard
+          kicker="Scanner"
+          title="Camera access is required"
+          body="Turn on the camera so the app can read barcodes and price labels.">
           <BigButton
             label="Enable camera"
             caption="Allow camera access"
@@ -166,21 +233,18 @@ export default function ScanScreen() {
               void requestPermission();
             }}
           />
-        </View>
+        </SectionCard>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.kicker, { color: colors.tintStrong }]}>Scanner</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Scan. Check. Add.</Text>
-          <Text style={[styles.body, { color: colors.icon }]}>
-            Put the price in the box. Then take a picture.
-          </Text>
-        </View>
+    <AppScreen>
+      <SectionCard
+        kicker="Scanner"
+        title="Point, scan, and review"
+        body="Aim at the barcode or shelf label. When a price is found, the app can send the item straight to your cart."
+      />
 
         <View style={[styles.cameraShell, { borderColor: colors.border, backgroundColor: colors.surface }]}>
           <CameraView
@@ -214,11 +278,16 @@ export default function ScanScreen() {
           <Pressable
             accessibilityRole="button"
             onPress={() => {
+              if (autoCaptureTimeoutRef.current) {
+                clearTimeout(autoCaptureTimeoutRef.current);
+                autoCaptureTimeoutRef.current = null;
+              }
               setLiveBarcode(undefined);
               setCandidate(null);
               setManualName('');
               setManualPrice('');
               setSaveMessage('');
+              lastSubmittedBarcodeRef.current = null;
             }}
             style={[
               styles.controlChip,
@@ -233,23 +302,28 @@ export default function ScanScreen() {
 
         <BigButton
           label={isProcessing ? 'Reading price...' : 'Take picture'}
-          caption="Read one item"
+          caption="Scan this item now"
           onPress={() => {
             void handleCapture();
           }}
         />
 
-        <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.metaLabel, { color: colors.icon }]}>Ready</Text>
-          <Text style={[styles.metaValue, { color: colors.text }]}>
-            {liveBarcode ?? 'Point at item or price'}
+        {!hasVisionExtraction ? (
+          <View style={[styles.saveBanner, { backgroundColor: colors.accentSoft }]}>
+            <Text style={[styles.saveText, { color: colors.text }]}>
+              Price-reading is not connected in this build yet. Barcode matches can still auto-add with saved prices.
+            </Text>
+          </View>
+        ) : null}
+
+        <SectionCard kicker="Scanner status" title={liveBarcode ?? 'Point at item or price'}>
+          <Text style={[styles.statusBody, { color: colors.icon }]}>
+            {liveBarcode ? 'Barcode found. Hold steady while the app reads the price.' : 'Center the barcode or price tag inside the frame.'}
           </Text>
-        </View>
+        </SectionCard>
 
         {candidate ? (
-          <View style={[styles.resultCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.resultKicker, { color: colors.tintStrong }]}>Best match</Text>
-            <Text style={[styles.resultTitle, { color: colors.text }]}>{candidate.title}</Text>
+          <SectionCard kicker="Best match" title={candidate.title}>
             <Text style={[styles.resultBody, { color: colors.icon }]}>
               {candidate.extractedPriceText ? `Price seen: ${candidate.extractedPriceText}` : 'Check the price below'}
             </Text>
@@ -313,69 +387,20 @@ export default function ScanScreen() {
                 ))}
               </View>
             ) : null}
-          </View>
+          </SectionCard>
         ) : null}
 
         <BigButton label="Go back" caption="Return home" variant="secondary" onPress={() => router.back()} />
-      </ScrollView>
-    </SafeAreaView>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   centered: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-  },
-  content: {
-    gap: 18,
-    padding: 20,
-    paddingBottom: 40,
-  },
-  permissionCard: {
-    borderRadius: AppTheme.radius.lg,
-    borderWidth: 1,
-    gap: 14,
-    maxWidth: 520,
-    padding: 22,
-  },
-  permissionTitle: {
-    fontFamily: Fonts.rounded,
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  permissionBody: {
-    fontFamily: Fonts.sans,
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  header: {
-    borderRadius: AppTheme.radius.lg,
-    borderWidth: 1,
-    gap: 10,
-    padding: 20,
-  },
-  kicker: {
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-  },
-  title: {
-    fontFamily: Fonts.serif,
-    fontSize: 30,
-    lineHeight: 36,
-  },
-  body: {
-    fontFamily: Fonts.sans,
-    fontSize: 14,
-    lineHeight: 21,
   },
   cameraShell: {
     borderRadius: AppTheme.radius.lg,
@@ -418,40 +443,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-  metaCard: {
-    borderRadius: AppTheme.radius.md,
-    borderWidth: 1,
-    gap: 6,
-    padding: 16,
-  },
-  metaLabel: {
+  statusBody: {
     fontFamily: Fonts.sans,
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  metaValue: {
-    fontFamily: Fonts.rounded,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  resultCard: {
-    borderRadius: AppTheme.radius.lg,
-    borderWidth: 1,
-    gap: 14,
-    padding: 20,
-  },
-  resultKicker: {
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-  },
-  resultTitle: {
-    fontFamily: Fonts.rounded,
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 14,
+    lineHeight: 20,
   },
   resultBody: {
     fontFamily: Fonts.sans,

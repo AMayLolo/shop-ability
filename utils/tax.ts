@@ -6,9 +6,13 @@ export function roundCurrency(value: number) {
   return Math.round(value * 100) / 100;
 }
 
+function getEnabledItems(items: CartItem[]) {
+  return items.filter((item) => item.enabled);
+}
+
 export function calculateSubtotal(items: CartItem[]) {
   return roundCurrency(
-    items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    getEnabledItems(items).reduce((sum, item) => sum + item.price * item.quantity, 0),
   );
 }
 

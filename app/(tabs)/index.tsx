@@ -1,16 +1,16 @@
 import { router } from 'expo-router';
 import React from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
 
+import AppScreen from '@/components/AppScreen';
 import BigButton from '@/components/BigButton';
 import MoneySummary from '@/components/MoneySummary';
+import SectionCard from '@/components/SectionCard';
 import { AppTheme, Colors, Fonts } from '@/constants/theme';
 import { useAppContext } from '@/context/AppContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -31,22 +31,12 @@ export default function DashboardScreen() {
   const canPay = remaining >= 0;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View
-          style={[
-            styles.hero,
-            {
-              backgroundColor: colors.hero,
-              borderColor: colors.heroSecondary,
-            },
-            AppTheme.shadow.hero,
-          ]}>
-          <Text style={styles.eyebrow}>Shop Ability</Text>
-          <Text style={styles.heroTitle}>Do I have enough money?</Text>
-          <Text style={styles.heroBody}>
-            Add items. See the total. Know what is left.
-          </Text>
+    <AppScreen>
+      <SectionCard
+        kicker="Shop Ability"
+        title="Know what fits before checkout."
+        body="Set your budget, scan items, and keep your running total easy to understand."
+        tone="hero">
           <View
             style={[
               styles.answerCard,
@@ -57,22 +47,17 @@ export default function DashboardScreen() {
             ]}>
             <Text style={styles.answerLabel}>{canPay ? 'YES' : 'NO'}</Text>
             <Text style={styles.answerText}>
-              {canPay ? 'You have enough right now.' : 'You do not have enough right now.'}
+              {canPay ? 'Your active cart fits.' : 'Your active cart is over budget.'}
             </Text>
           </View>
-        </View>
+      </SectionCard>
 
-        <View
-          style={[
-            styles.panel,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
-            AppTheme.shadow.soft,
-          ]}>
+        <SectionCard
+          kicker="Budget"
+          title="Money available"
+          body="Change the amount any time and the app will recalculate the cart right away.">
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Money in the app</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Track what you can spend</Text>
             <Text style={[styles.sectionCaption, { color: colors.icon }]}>From you or your guardian</Text>
           </View>
 
@@ -121,51 +106,12 @@ export default function DashboardScreen() {
             variant="secondary"
             onPress={() => router.push('/explore')}
           />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </SectionCard>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
-  content: {
-    alignSelf: 'center',
-    gap: 20,
-    padding: 20,
-    paddingBottom: 40,
-    width: '100%',
-    maxWidth: AppTheme.maxWidth,
-  },
-  hero: {
-    borderRadius: AppTheme.radius.lg,
-    borderWidth: 1,
-    gap: 14,
-    padding: 24,
-  },
-  eyebrow: {
-    color: '#E6D5C3',
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
-  },
-  heroTitle: {
-    color: '#FFF8F1',
-    fontFamily: Fonts.serif,
-    fontSize: 34,
-    lineHeight: 40,
-  },
-  heroBody: {
-    color: '#E5D8CA',
-    fontFamily: Fonts.sans,
-    fontSize: 15,
-    lineHeight: 23,
-    maxWidth: 520,
-  },
   answerCard: {
     borderRadius: AppTheme.radius.md,
     borderWidth: 1,
@@ -186,12 +132,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.rounded,
     fontSize: 28,
     fontWeight: '700',
-  },
-  panel: {
-    borderRadius: AppTheme.radius.lg,
-    borderWidth: 1,
-    gap: 18,
-    padding: 20,
   },
   sectionHeader: {
     gap: 4,

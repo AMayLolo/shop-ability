@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
 import React from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
+import AppScreen from '@/components/AppScreen';
 import BigButton from '@/components/BigButton';
+import SectionCard from '@/components/SectionCard';
 import { AppTheme, Colors, Fonts } from '@/constants/theme';
 import { useAppContext } from '@/context/AppContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -13,25 +15,14 @@ const suggestedBudgets = ['20', '50', '100'];
 export default function EnterMoneyScreen() {
   const scheme = useColorScheme() ?? 'light';
   const colors = Colors[scheme];
-  const { budgetInput, setBudgetInput, total, remaining } = useAppContext();
+  const { budgetInput, setBudgetInput, remaining } = useAppContext();
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
-            AppTheme.shadow.soft,
-          ]}>
-          <Text style={[styles.kicker, { color: colors.tintStrong }]}>Money</Text>
-          <Text style={[styles.title, { color: colors.text }]}>How much money is in the app?</Text>
-          <Text style={[styles.body, { color: colors.icon }]}>
-            Put in the amount from you or your guardian.
-          </Text>
+    <AppScreen contentStyle={styles.content}>
+      <SectionCard
+        kicker="Budget"
+        title="Set the money in the app"
+        body="Choose a quick amount or type the exact number you want to shop with.">
 
           <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surfaceMuted }]}>
             <Text style={[styles.currencyMark, { color: colors.tintStrong }]}>$</Text>
@@ -71,48 +62,20 @@ export default function EnterMoneyScreen() {
                 : `You need ${formatCurrency(Math.abs(remaining))} more for the cart.`}
             </Text>
           </View>
-        </View>
+      </SectionCard>
 
-        <BigButton
-          label="Save money amount"
-          caption="Go back"
-          onPress={() => router.back()}
-        />
-      </View>
-    </SafeAreaView>
+      <BigButton
+        label="Save budget"
+        caption="Go back"
+        onPress={() => router.back()}
+      />
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   content: {
     gap: 20,
-    padding: 20,
-  },
-  card: {
-    borderRadius: AppTheme.radius.lg,
-    borderWidth: 1,
-    gap: 18,
-    padding: 22,
-  },
-  kicker: {
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-  },
-  title: {
-    fontFamily: Fonts.serif,
-    fontSize: 30,
-    lineHeight: 36,
-  },
-  body: {
-    fontFamily: Fonts.sans,
-    fontSize: 15,
-    lineHeight: 22,
   },
   inputWrap: {
     alignItems: 'center',

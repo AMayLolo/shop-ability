@@ -8,6 +8,7 @@ export type CartItem = {
   price: number;
   quantity: number;
   priority: CartPriority;
+  enabled: boolean;
   barcode?: string;
   source?: 'seed' | 'scanner' | 'manual';
 };
