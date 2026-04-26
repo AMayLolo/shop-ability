@@ -8,7 +8,7 @@ import { useAppContext } from '@/context/AppContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { formatCurrency } from '@/utils/tax';
 
-const suggestedBudgets = ['75', '120', '180'];
+const suggestedBudgets = ['20', '50', '100'];
 
 export default function EnterMoneyScreen() {
   const scheme = useColorScheme() ?? 'light';
@@ -27,11 +27,10 @@ export default function EnterMoneyScreen() {
             },
             AppTheme.shadow.soft,
           ]}>
-          <Text style={[styles.kicker, { color: colors.tintStrong }]}>Budget editor</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Choose a spending ceiling that feels good.</Text>
+          <Text style={[styles.kicker, { color: colors.tintStrong }]}>Money</Text>
+          <Text style={[styles.title, { color: colors.text }]}>How much money is in the app?</Text>
           <Text style={[styles.body, { color: colors.icon }]}>
-            Your current projected total is {formatCurrency(total)}. A little cushion keeps checkout
-            easier and gives you room for price changes.
+            Put in the amount from you or your guardian.
           </Text>
 
           <View style={[styles.inputWrap, { borderColor: colors.border, backgroundColor: colors.surfaceMuted }]}>
@@ -65,18 +64,18 @@ export default function EnterMoneyScreen() {
           </View>
 
           <View style={[styles.note, { backgroundColor: colors.accentSoft }]}>
-            <Text style={[styles.noteTitle, { color: colors.text }]}>Estimated headroom</Text>
+            <Text style={[styles.noteTitle, { color: colors.text }]}>Right now</Text>
             <Text style={[styles.noteBody, { color: colors.icon }]}>
               {remaining > 0
-                ? `${formatCurrency(remaining)} remains after your projected checkout.`
-                : 'You are fully allocated, so consider trimming one non-essential item.'}
+                ? `${formatCurrency(remaining)} would be left after the cart.`
+                : `You need ${formatCurrency(Math.abs(remaining))} more for the cart.`}
             </Text>
           </View>
         </View>
 
         <BigButton
-          label="Save and return"
-          caption="Apply this budget to your dashboard"
+          label="Save money amount"
+          caption="Go back"
           onPress={() => router.back()}
         />
       </View>

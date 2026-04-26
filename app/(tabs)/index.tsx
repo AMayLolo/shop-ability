@@ -27,9 +27,8 @@ export default function DashboardScreen() {
     tax,
     total,
     remaining,
-    progress,
-    insights,
   } = useAppContext();
+  const canPay = remaining >= 0;
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
@@ -44,20 +43,22 @@ export default function DashboardScreen() {
             AppTheme.shadow.hero,
           ]}>
           <Text style={styles.eyebrow}>Shop Ability</Text>
-          <Text style={styles.heroTitle}>Simple help for any shopping trip.</Text>
+          <Text style={styles.heroTitle}>Do I have enough money?</Text>
           <Text style={styles.heroBody}>
-            Scan one item at a time. Check the total. Stay on budget.
+            Add items. See the total. Know what is left.
           </Text>
-
-          <View style={styles.heroStats}>
-            <View style={[styles.heroStat, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-              <Text style={styles.heroStatLabel}>Budget</Text>
-              <Text style={styles.heroStatValue}>{formatCurrency(budget)}</Text>
-            </View>
-            <View style={[styles.heroStat, { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
-              <Text style={styles.heroStatLabel}>Cart total</Text>
-              <Text style={styles.heroStatValue}>{formatCurrency(total)}</Text>
-            </View>
+          <View
+            style={[
+              styles.answerCard,
+              {
+                backgroundColor: canPay ? 'rgba(122, 193, 155, 0.18)' : 'rgba(176, 74, 59, 0.2)',
+                borderColor: canPay ? '#7AC19B' : '#E58E80',
+              },
+            ]}>
+            <Text style={styles.answerLabel}>{canPay ? 'YES' : 'NO'}</Text>
+            <Text style={styles.answerText}>
+              {canPay ? 'You have enough right now.' : 'You do not have enough right now.'}
+            </Text>
           </View>
         </View>
 
@@ -71,11 +72,11 @@ export default function DashboardScreen() {
             AppTheme.shadow.soft,
           ]}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Shopping budget</Text>
-            <Text style={[styles.sectionCaption, { color: colors.icon }]}>Keep the trip simple</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Money in the app</Text>
+            <Text style={[styles.sectionCaption, { color: colors.icon }]}>From you or your guardian</Text>
           </View>
 
-          <Text style={[styles.inputLabel, { color: colors.icon }]}>Budget</Text>
+          <Text style={[styles.inputLabel, { color: colors.icon }]}>Money available</Text>
           <View style={[styles.inputShell, { borderColor: colors.border, backgroundColor: colors.surfaceMuted }]}>
             <Text style={[styles.dollar, { color: colors.tintStrong }]}>$</Text>
             <TextInput
@@ -88,61 +89,38 @@ export default function DashboardScreen() {
             />
           </View>
 
-          <View style={styles.progressBlock}>
-            <View style={styles.progressLabels}>
-              <Text style={[styles.progressTitle, { color: colors.text }]}>Used</Text>
-              <Text style={[styles.progressValue, { color: progress > 0.9 ? colors.danger : colors.tintStrong }]}>
-                {Math.round(progress * 100)}%
-              </Text>
-            </View>
-            <View style={[styles.progressTrack, { backgroundColor: colors.surfaceMuted }]}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${Math.max(progress * 100, 6)}%`,
-                    backgroundColor: progress > 0.9 ? colors.danger : colors.accent,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-
           <View style={styles.summaryGrid}>
             <View style={styles.summaryItem}>
-              <MoneySummary label="Subtotal" value={formatCurrency(subtotal)} detail="Items before tax" />
+              <MoneySummary label="I have" value={formatCurrency(budget)} detail="Money available" tone="accent" />
+            </View>
+            <View style={styles.summaryItem}>
+              <MoneySummary label="Cart" value={formatCurrency(subtotal)} detail="Items before tax" />
             </View>
             <View style={styles.summaryItem}>
               <MoneySummary label="Tax" value={formatCurrency(tax)} detail="Estimated tax" />
             </View>
             <View style={styles.summaryItem}>
-              <MoneySummary label="Left" value={formatCurrency(remaining)} detail="Budget left" tone="accent" />
+              <MoneySummary label="Left" value={formatCurrency(remaining)} detail="Money left" tone="accent" />
             </View>
           </View>
 
           <BigButton
-            label="Change budget"
-            caption="Open budget screen"
+            label="Change money"
+            caption="Set the amount in the app"
             onPress={() => router.push('/enter-money')}
           />
           <BigButton
             label="Scan item"
-            caption="Add one item"
+            caption="Add one thing"
             variant="secondary"
             onPress={() => router.push('/scan')}
           />
-        </View>
-        <View style={styles.summaryGrid}>
-          {insights.map((insight, index) => (
-            <View key={insight.id} style={styles.summaryItem}>
-              <MoneySummary
-                label={insight.label}
-                value={insight.value}
-                detail={insight.detail}
-                tone={index === 0 ? 'accent' : 'neutral'}
-              />
-            </View>
-          ))}
+          <BigButton
+            label="Open cart"
+            caption="See all items and total"
+            variant="secondary"
+            onPress={() => router.push('/explore')}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -188,27 +166,25 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     maxWidth: 520,
   },
-  heroStats: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  heroStat: {
+  answerCard: {
     borderRadius: AppTheme.radius.md,
-    flex: 1,
+    borderWidth: 1,
     gap: 6,
-    padding: 16,
+    marginTop: 8,
+    padding: 18,
   },
-  heroStatLabel: {
-    color: '#D8C5B0',
+  answerLabel: {
+    color: '#FFF8F1',
     fontFamily: Fonts.sans,
     fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.1,
     textTransform: 'uppercase',
   },
-  heroStatValue: {
+  answerText: {
     color: '#FFF8F1',
     fontFamily: Fonts.rounded,
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
   },
   panel: {
@@ -253,32 +229,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     padding: 0,
-  },
-  progressBlock: {
-    gap: 10,
-  },
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  progressTitle: {
-    fontFamily: Fonts.sans,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  progressValue: {
-    fontFamily: Fonts.sans,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  progressTrack: {
-    borderRadius: AppTheme.radius.pill,
-    height: 12,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    borderRadius: AppTheme.radius.pill,
-    height: '100%',
   },
   summaryGrid: {
     gap: 14,

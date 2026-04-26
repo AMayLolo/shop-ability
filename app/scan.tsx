@@ -23,7 +23,6 @@ import {
   SUPPORTED_BARCODE_TYPES,
   buildPriceCandidate,
   extractVisionPrice,
-  isVisionExtractionConfigured,
   preprocessScanImage,
   scanBarcodesFromImage,
 } from '@/services/price-scanner';
@@ -158,7 +157,7 @@ export default function ScanScreen() {
         <View style={[styles.permissionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.permissionTitle, { color: colors.text }]}>Camera access is required</Text>
           <Text style={[styles.permissionBody, { color: colors.icon }]}>
-            Turn on the camera to scan an item and read the price.
+            Turn on the camera to read the price.
           </Text>
           <BigButton
             label="Enable camera"
@@ -177,24 +176,10 @@ export default function ScanScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.kicker, { color: colors.tintStrong }]}>Scanner</Text>
-          <Text style={[styles.title, { color: colors.text }]}>Scan item. Check price. Add to cart.</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Scan. Check. Add.</Text>
           <Text style={[styles.body, { color: colors.icon }]}>
-            Keep the label inside the box. Take one clear picture.
+            Put the price in the box. Then take a picture.
           </Text>
-          <View
-            style={[
-              styles.statusBadge,
-              {
-                backgroundColor: isVisionExtractionConfigured() ? colors.accentSoft : colors.surfaceMuted,
-                borderColor: isVisionExtractionConfigured() ? colors.accent : colors.border,
-              },
-            ]}>
-            <Text style={[styles.statusText, { color: colors.text }]}>
-              {isVisionExtractionConfigured()
-                ? 'Backend price proxy is enabled'
-                : 'Needs EXPO_PUBLIC_PRICE_PROXY_URL'}
-            </Text>
-          </View>
         </View>
 
         <View style={[styles.cameraShell, { borderColor: colors.border, backgroundColor: colors.surface }]}>
@@ -247,17 +232,17 @@ export default function ScanScreen() {
         </View>
 
         <BigButton
-          label={isProcessing ? 'Reading the price...' : 'Capture and read price'}
-          caption="Take picture"
+          label={isProcessing ? 'Reading price...' : 'Take picture'}
+          caption="Read one item"
           onPress={() => {
             void handleCapture();
           }}
         />
 
         <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.metaLabel, { color: colors.icon }]}>Live barcode</Text>
+          <Text style={[styles.metaLabel, { color: colors.icon }]}>Ready</Text>
           <Text style={[styles.metaValue, { color: colors.text }]}>
-            {liveBarcode ?? 'Point at item or price label'}
+            {liveBarcode ?? 'Point at item or price'}
           </Text>
         </View>
 
@@ -266,8 +251,7 @@ export default function ScanScreen() {
             <Text style={[styles.resultKicker, { color: colors.tintStrong }]}>Best match</Text>
             <Text style={[styles.resultTitle, { color: colors.text }]}>{candidate.title}</Text>
             <Text style={[styles.resultBody, { color: colors.icon }]}>
-              Confidence {Math.round(candidate.confidence * 100)}%
-              {candidate.extractedPriceText ? ` · Saw ${candidate.extractedPriceText}` : ''}
+              {candidate.extractedPriceText ? `Price seen: ${candidate.extractedPriceText}` : 'Check the price below'}
             </Text>
 
             {candidate.extractionSummary ? (
@@ -281,12 +265,12 @@ export default function ScanScreen() {
             ) : null}
 
             <View style={styles.reviewSection}>
-              <Text style={[styles.reviewTitle, { color: colors.text }]}>Check item</Text>
+              <Text style={[styles.reviewTitle, { color: colors.text }]}>Check</Text>
               <TextInput
                 accessibilityLabel="Item name"
                 value={manualName}
                 onChangeText={setManualName}
-                placeholder="Product name"
+                placeholder="Item name"
                 placeholderTextColor={colors.icon}
                 style={[
                   styles.input,
@@ -298,36 +282,13 @@ export default function ScanScreen() {
                 value={manualPrice}
                 onChangeText={setManualPrice}
                 keyboardType="decimal-pad"
-                placeholder="Shelf price"
+                placeholder="Price"
                 placeholderTextColor={colors.icon}
                 style={[
                   styles.input,
                   { color: colors.text, borderColor: colors.border, backgroundColor: colors.surfaceMuted },
                 ]}
               />
-              <View style={styles.categoryRow}>
-                {(['produce', 'protein', 'pantry', 'household'] as CartCategory[]).map((category) => (
-                  <Pressable
-                    key={category}
-                    accessibilityRole="button"
-                    onPress={() => setManualCategory(category)}
-                    style={[
-                      styles.categoryChip,
-                      {
-                        backgroundColor: manualCategory === category ? colors.tintStrong : colors.surfaceMuted,
-                        borderColor: manualCategory === category ? colors.tintStrong : colors.border,
-                      },
-                    ]}>
-                    <Text
-                      style={[
-                        styles.categoryText,
-                        { color: manualCategory === category ? '#FFF8F1' : colors.text },
-                      ]}>
-                      {category}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
               <Text style={[styles.reviewHint, { color: colors.icon }]}>
                 {manualPrice
                   ? `Ready to add at ${formatCurrency(Number(manualPrice) || 0)}`
@@ -335,11 +296,7 @@ export default function ScanScreen() {
               </Text>
             </View>
 
-            <BigButton
-              label="Add item to cart"
-              caption="Save item"
-              onPress={addScannedItemToCart}
-            />
+            <BigButton label="Add to cart" caption="Save item" onPress={addScannedItemToCart} />
 
             {saveMessage ? (
               <View style={[styles.saveBanner, { backgroundColor: colors.accentSoft }]}>
@@ -359,12 +316,7 @@ export default function ScanScreen() {
           </View>
         ) : null}
 
-        <BigButton
-          label="Close scanner"
-          caption="Return to the dashboard"
-          variant="secondary"
-          onPress={() => router.back()}
-        />
+        <BigButton label="Go back" caption="Return home" variant="secondary" onPress={() => router.back()} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -424,19 +376,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.sans,
     fontSize: 14,
     lineHeight: 21,
-  },
-  statusBadge: {
-    borderRadius: AppTheme.radius.pill,
-    borderWidth: 1,
-    marginTop: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    alignSelf: 'flex-start',
-  },
-  statusText: {
-    fontFamily: Fonts.sans,
-    fontSize: 13,
-    fontWeight: '700',
   },
   cameraShell: {
     borderRadius: AppTheme.radius.lg,
@@ -550,23 +489,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingHorizontal: 14,
     paddingVertical: 14,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  categoryChip: {
-    borderRadius: AppTheme.radius.pill,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  categoryText: {
-    fontFamily: Fonts.sans,
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'capitalize',
   },
   reviewHint: {
     fontFamily: Fonts.sans,
