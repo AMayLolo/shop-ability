@@ -1,11 +1,6 @@
 import { router } from 'expo-router';
 import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import AppScreen from '@/components/AppScreen';
 import BigButton from '@/components/BigButton';
@@ -19,161 +14,145 @@ import { formatCurrency } from '@/utils/tax';
 export default function DashboardScreen() {
   const scheme = useColorScheme() ?? 'light';
   const colors = Colors[scheme];
-  const {
-    budgetInput,
-    setBudgetInput,
-    budget,
-    subtotal,
-    tax,
-    total,
-    remaining,
-  } = useAppContext();
-  const canPay = remaining >= 0;
+  const { budget, cartItems, startNewTrip, subtotal, total } = useAppContext();
+  const itemCount = cartItems.filter((item) => item.enabled).reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleStartTrip = () => {
+    startNewTrip();
+    router.push('/scan');
+  };
 
   return (
-    <AppScreen>
+    <AppScreen contentStyle={styles.content}>
       <SectionCard
         kicker="Shop Ability"
-        title="Know what fits before checkout."
-        body="Set your budget, scan items, and keep your running total easy to understand."
-        tone="hero">
+        title="Shop Ability"
+        body="Check your current trip at a glance, then jump right back into shopping."
+        tone="hero"
+      />
+
+      <SectionCard
+        kicker="Current Trip"
+        title="This shopping trip"
+        body="Your active cart totals update automatically as you add or remove items.">
+        <View style={styles.tripSummary}>
           <View
             style={[
-              styles.answerCard,
+              styles.tripRow,
               {
-                backgroundColor: canPay ? 'rgba(122, 193, 155, 0.18)' : 'rgba(176, 74, 59, 0.2)',
-                borderColor: canPay ? '#7AC19B' : '#E58E80',
+                borderBottomColor: colors.border,
               },
             ]}>
-            <Text style={styles.answerLabel}>{canPay ? 'YES' : 'NO'}</Text>
-            <Text style={styles.answerText}>
-              {canPay ? 'Your active cart fits.' : 'Your active cart is over budget.'}
-            </Text>
+            <Text style={[styles.tripLabel, { color: colors.icon }]}>Items</Text>
+            <Text style={[styles.tripValue, { color: colors.text }]}>{itemCount}</Text>
           </View>
+          <View
+            style={[
+              styles.tripRow,
+              {
+                borderBottomColor: colors.border,
+              },
+            ]}>
+            <Text style={[styles.tripLabel, { color: colors.icon }]}>Subtotal</Text>
+            <Text style={[styles.tripValue, { color: colors.text }]}>{formatCurrency(subtotal)}</Text>
+          </View>
+          <View style={styles.tripRow}>
+            <Text style={[styles.tripLabel, { color: colors.icon }]}>Total (with tax)</Text>
+            <Text style={[styles.tripValue, { color: colors.text }]}>{formatCurrency(total)}</Text>
+          </View>
+        </View>
       </SectionCard>
 
-        <SectionCard
-          kicker="Budget"
-          title="Money available"
-          body="Change the amount any time and the app will recalculate the cart right away.">
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Track what you can spend</Text>
-            <Text style={[styles.sectionCaption, { color: colors.icon }]}>From you or your guardian</Text>
-          </View>
+      <BigButton
+        label="Resume Shopping"
+        caption="Return to your current trip"
+        onPress={() => router.push('/explore')}
+      />
 
-          <Text style={[styles.inputLabel, { color: colors.icon }]}>Money available</Text>
-          <View style={[styles.inputShell, { borderColor: colors.border, backgroundColor: colors.surfaceMuted }]}>
-            <Text style={[styles.dollar, { color: colors.tintStrong }]}>$</Text>
-            <TextInput
-              keyboardType="decimal-pad"
-              value={budgetInput}
-              onChangeText={setBudgetInput}
-              placeholder="120"
-              placeholderTextColor={colors.icon}
-              style={[styles.input, { color: colors.text }]}
-            />
-          </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint="Opens the budget editor"
+        onPress={() => router.push('/enter-money')}
+        style={({ pressed }) => [
+          styles.budgetTile,
+          { opacity: pressed ? 0.96 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] },
+        ]}>
+        <MoneySummary
+          label="Budget"
+          value={formatCurrency(budget)}
+          detail="Tap to edit the amount for this trip"
+          tone="accent"
+        />
+        <View
+          style={[
+            styles.editBadge,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+            },
+          ]}>
+          <Text style={[styles.editBadgeText, { color: colors.tintStrong }]}>Edit</Text>
+        </View>
+      </Pressable>
 
-          <View style={styles.summaryGrid}>
-            <View style={styles.summaryItem}>
-              <MoneySummary label="I have" value={formatCurrency(budget)} detail="Money available" tone="accent" />
-            </View>
-            <View style={styles.summaryItem}>
-              <MoneySummary label="Cart" value={formatCurrency(subtotal)} detail="Items before tax" />
-            </View>
-            <View style={styles.summaryItem}>
-              <MoneySummary label="Tax" value={formatCurrency(tax)} detail="Estimated tax" />
-            </View>
-            <View style={styles.summaryItem}>
-              <MoneySummary label="Left" value={formatCurrency(remaining)} detail="Money left" tone="accent" />
-            </View>
-          </View>
-
-          <BigButton
-            label="Change money"
-            caption="Set the amount in the app"
-            onPress={() => router.push('/enter-money')}
-          />
-          <BigButton
-            label="Scan item"
-            caption="Add one thing"
-            variant="secondary"
-            onPress={() => router.push('/scan')}
-          />
-          <BigButton
-            label="Open cart"
-            caption="See all items and total"
-            variant="secondary"
-            onPress={() => router.push('/explore')}
-          />
-        </SectionCard>
+      <BigButton
+        label="Start new shopping trip"
+        caption="Clear the current cart and open the scanner"
+        variant="secondary"
+        onPress={handleStartTrip}
+      />
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  answerCard: {
+  content: {
+    gap: 20,
+    justifyContent: 'center',
+    minHeight: '100%',
+  },
+  budgetTile: {
+    position: 'relative',
+  },
+  tripSummary: {
     borderRadius: AppTheme.radius.md,
     borderWidth: 1,
-    gap: 6,
-    marginTop: 8,
-    padding: 18,
+    borderColor: 'transparent',
+    marginTop: 4,
+    overflow: 'hidden',
   },
-  answerLabel: {
-    color: '#FFF8F1',
+  tripRow: {
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+  },
+  tripLabel: {
+    fontFamily: Fonts.sans,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  tripValue: {
+    fontFamily: Fonts.rounded,
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  editBadge: {
+    ...AppTheme.shadow.soft,
+    borderRadius: AppTheme.radius.pill,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    position: 'absolute',
+    right: 14,
+    top: 14,
+  },
+  editBadgeText: {
     fontFamily: Fonts.sans,
     fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 1.1,
+    letterSpacing: 0.4,
     textTransform: 'uppercase',
-  },
-  answerText: {
-    color: '#FFF8F1',
-    fontFamily: Fonts.rounded,
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  sectionHeader: {
-    gap: 4,
-  },
-  sectionTitle: {
-    fontFamily: Fonts.rounded,
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  sectionCaption: {
-    fontFamily: Fonts.sans,
-    fontSize: 14,
-  },
-  inputLabel: {
-    fontFamily: Fonts.sans,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  inputShell: {
-    alignItems: 'center',
-    borderRadius: AppTheme.radius.md,
-    borderWidth: 1,
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  dollar: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginRight: 8,
-  },
-  input: {
-    flex: 1,
-    fontFamily: Fonts.rounded,
-    fontSize: 28,
-    fontWeight: '700',
-    padding: 0,
-  },
-  summaryGrid: {
-    gap: 14,
-  },
-  summaryItem: {
-    width: '100%',
   },
 });

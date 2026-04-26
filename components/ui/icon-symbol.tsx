@@ -21,6 +21,7 @@ const MAPPING = {
   'chart.bar.fill': 'bar-chart',
   'creditcard.fill': 'credit-card',
   'bag.fill': 'shopping-bag',
+  'gearshape.fill': 'settings',
   'sparkles': 'auto-awesome',
 } as IconMapping;
 

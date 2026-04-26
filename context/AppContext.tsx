@@ -18,6 +18,7 @@ type AppContextType = {
   budgetInput: string;
   setBudgetInput: (value: string) => void;
   budget: number;
+  startNewTrip: () => void;
   shoppingMode: ShoppingMode;
   setShoppingMode: (mode: ShoppingMode) => void;
   taxRate: number;
@@ -51,6 +52,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [budgetInput, setBudgetInput] = useState('120');
   const [shoppingMode, setShoppingMode] = useState<ShoppingMode>('Weekly Reset');
   const [cartItems, setCartItems] = useState<CartItem[]>(starterItems);
+
+  const startNewTrip = useCallback(() => {
+    setCartItems([]);
+  }, []);
 
   const addCartItem = useCallback((item: AddCartItemInput) => {
     setCartItems((currentItems) => {
@@ -139,6 +144,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       budgetInput,
       setBudgetInput,
       budget,
+      startNewTrip,
       shoppingMode,
       setShoppingMode,
       taxRate: DEFAULT_TAX_RATE,
@@ -152,7 +158,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       progress,
       insights,
     }),
-    [addCartItem, budget, budgetInput, cartItems, insights, progress, remaining, shoppingMode, subtotal, tax, toggleCartItem, total],
+    [addCartItem, budget, budgetInput, cartItems, insights, progress, remaining, shoppingMode, startNewTrip, subtotal, tax, toggleCartItem, total],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
